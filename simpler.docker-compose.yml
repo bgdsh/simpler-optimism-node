@@ -1,0 +1,108 @@
+---
+version: "3.4"
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  dtl:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.dtl
+    restart: unless-stopped
+    entrypoint: /scripts/dtl-start.sh
+    env_file:
+      - ./envs/${NETWORK_NAME}/dtl.env
+      - .env
+    volumes:
+      - dtl:/db
+    ports:
+      - ${PORT__DTL:-7878}:7878
+    <<: *logging
+
+  l2geth:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.l2geth
+    restart: unless-stopped
+    stop_grace_period: 5m
+    entrypoint: 
+      - /bin/sh
+      - -c
+      - "/scripts/l2geth-init.sh && /scripts/l2geth-start.sh"
+    env_file:
+      - ./envs/${NETWORK_NAME}/l2geth.env
+      - .env
+    ports:
+      - ${PORT__L2GETH_HTTP:-9991}:8545
+      - ${PORT__L2GETH_WS:-9992}:8546
+    volumes:
+      - geth:/geth
+    <<: *logging
+
+  op-geth:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.op-geth
+    restart: unless-stopped
+    stop_grace_period: 5m
+    entrypoint: /scripts/op-geth-start.sh
+    env_file:
+      - ./envs/${NETWORK_NAME}/op-geth.env
+      - .env
+    ports:
+      - ${PORT__OP_GETH_HTTP:-9993}:8545
+      - ${PORT__OP_GETH_WS:-9994}:8546
+    volumes:
+      - shared:/shared
+      - op_geth:/geth
+    <<: *logging
+
+  op-node:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.op-node
+    restart: unless-stopped
+    stop_grace_period: 5m
+    entrypoint: /scripts/op-node-start.sh
+    env_file:
+      - .env
+    volumes:
+      - shared:/shared
+    <<: *logging
+
+  bedrock-init:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.bedrock-init
+    entrypoint: /scripts/bedrock-init.sh
+    env_file:
+      - .env
+    volumes:
+      - shared:/shared
+      - op_geth:/geth
+      - geth:/legacy-geth
+      - torrent_downloads:/downloads
+    <<: *logging
+
+  torrent:
+    image: lscr.io/linuxserver/qbittorrent:${IMAGE_TAG__TORRENT:-latest}
+    restart: unless-stopped
+    ports:
+      - ${PORT__TORRENT_UI:-8080}:8080
+      - ${PORT__TORRENT:-6881}:6881 
+      - ${PORT__TORRENT:-6881}:6881/udp
+    volumes:
+      - torrent_config:/config
+      - torrent_downloads:/downloads
+
+volumes:
+  dtl:
+  geth:
+  shared:
+  op_geth:
+  torrent_config:
+  torrent_downloads:

@@ -20,3 +20,6 @@ RUN rsync -a /root/.foundry/bin/ /usr/bin/
 
 # Install Python packages.
 RUN pip3 install qbittorrent-api
+
+COPY ./scripts /scripts
+RUN chmod +x /scripts/*
