@@ -102,10 +102,20 @@ services:
     volumes:
       - ./volumes/data/shared:/data/shared
       - ./volumes/data/geth:/data/geth
+    <<: *logging
+
+  bedrock-init:
+    build:
+      context: ./docker/dockerfiles
+      dockerfile: Dockerfile.bedrock-init
+    entrypoint: /scripts/bedrock-init.sh
+    environments:
+      - NETWORK_NAME: goerli
+    volumes:
       - ./volumes/data/shared:/data/shared
       - ./volumes/data/geth:/data/geth
       - ./volumes/data/l2geth:/data/l2geth
-      - ./volumes/data/torrent_downloads:/data/torrent_downloads
+      - ./volumes/data/torrent_downloads:/downloads
     <<: *logging
 
   op-node:
@@ -131,4 +141,4 @@ services:
       - 6881:6881/udp
     volumes:
       - ./volumes/data/torrent_config:/data/torrent_config
-      - ./volumes/data/torrent_downloads:/data/torrent_downloads
+      - ./volumes/data/torrent_downloads:/downloads

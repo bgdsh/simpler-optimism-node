@@ -33,7 +33,7 @@ exec geth \
   --authrpc.vhosts="*" \
   --authrpc.addr=0.0.0.0 \
   --authrpc.port=8551 \
-  --authrpc.jwtsecret=/shared/jwt.txt \
+  --authrpc.jwtsecret=/data/shared/jwt.txt \
   --rollup.sequencerhttp="$BEDROCK_SEQUENCER_HTTP" \
   --rollup.disabletxpoolgossip=true \
   --rollup.historicalrpc=http://l2geth:8545 \

@@ -35,13 +35,13 @@ fi
 
 # Initialize the Bedrock database.
 if [ "$BEDROCK_SOURCE" == "download" ]; then
-  BEDROCK_TAR_PATH=/data/torrent_downloads/bedrock.tar
+  BEDROCK_TAR_PATH=/downloads/bedrock.tar
   BEDROCK_TMP_PATH=/data/bedrock-tmp
 
-  echo "Downloading bedrock.tar..."
+  echo "Downloading bedrock.tar... from $BEDROCK_TAR_MAGNET"
   torrent $BEDROCK_TAR_MAGNET
 
-  echo "Extracting bedrock.tar..."
+  echo "Extracting bedrock.tar... to $BEDROCK_TMP_PATH"
   extract $BEDROCK_TAR_PATH $BEDROCK_TMP_PATH
 
   echo "Initializing geth..."
@@ -53,7 +53,7 @@ elif [ "$BEDROCK_SOURCE" == "migration" ]; then
 # will never run this branch in simpler mode
   LEGACY_GETH_DATA_DIR=/data/l2geth/geth
   LEGACY_GETH_COPY_DIR=/data/l2geth-copy
-  WITNESS_TAR_PATH=/data/torrent_downloads/witness.tar
+  WITNESS_TAR_PATH=/downloads/witness.tar
   WITNESS_OUT_PATH=/data/witness
 
   echo "Waiting for l2geth..."
@@ -111,10 +111,10 @@ else
 fi
 
 # Create the JWT.
-echo "Creating JWT..."
+echo "Creating JWT... $BEDROCK_JWT_PATH"
 mkdir -p $(dirname $BEDROCK_JWT_PATH)
 openssl rand -hex 32 > $BEDROCK_JWT_PATH
 
 # Create the Bedrock flag to indicate that we've initialized.
-echo "Creating Bedrock flag..."
+echo "Creating Bedrock flag... $INITIALIZED_FLAG"
 touch $INITIALIZED_FLAG
