@@ -1,7 +1,7 @@
 #!/bin/sh
 set -exu
 
-GETH_DATA_DIR=/geth
+GETH_DATA_DIR=/data/l2geth
 GETH_CHAINDATA_DIR=$GETH_DATA_DIR/geth/chaindata
 GETH_KEYSTORE_DIR=$GETH_DATA_DIR/keystore
 

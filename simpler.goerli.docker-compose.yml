@@ -1,0 +1,134 @@
+---
+version: "3.4"
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  dtl:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.dtl
+    restart: unless-stopped
+    entrypoint: /scripts/dtl-start.sh
+    environments:
+     - NETWORK_NAME: goerli
+     - DATA_TRANSPORT_LAYER__L1_START_HEIGHT: '7017096'
+     - DATA_TRANSPORT_LAYER__CONFIRMATIONS: '12'
+     - DATA_TRANSPORT_LAYER__DANGEROUSLY_CATCH_ALL_ERRORS: 'true'
+     - DATA_TRANSPORT_LAYER__DB_PATH: '/data/dtl-db'
+     - DATA_TRANSPORT_LAYER__ENABLE_METRICS: 'true'
+     - DATA_TRANSPORT_LAYER__ETH_NETWORK_NAME: 'goerli'
+     - DATA_TRANSPORT_LAYER__L2_CHAIN_ID: '420'
+     - DATA_TRANSPORT_LAYER__LOGS_PER_POLLING_INTERVAL: '2000'
+     - DATA_TRANSPORT_LAYER__NODE_ENV: 'production'
+     - DATA_TRANSPORT_LAYER__POLLING_INTERVAL: '500'
+     - DATA_TRANSPORT_LAYER__SENTRY_TRACE_RATE: '0.05'
+     - DATA_TRANSPORT_LAYER__SERVER_HOSTNAME: '0.0.0.0'
+     - DATA_TRANSPORT_LAYER__SERVER_PORT: '7878'
+     - DATA_TRANSPORT_LAYER__TRANSACTIONS_PER_POLLING_INTERVAL: '1000'
+    volumes:
+      - ./volumes/data/dtl-db:/data/dtl-db
+    ports:
+      - 7878:7878
+    <<: *logging
+
+  l2geth:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.l2geth
+    restart: unless-stopped
+    stop_grace_period: 5m
+    entrypoint: 
+      - /bin/sh
+      - -c
+      - "/scripts/l2geth-init.sh && /scripts/l2geth-start.sh"
+    environments:
+      - NETWORK_NAME: 'goerli'
+      - USING_OVM: 'true'
+      - SEQUENCER_CLIENT_HTTP: 'https://goerli.optimism.io'
+      - BLOCK_SIGNER_ADDRESS: '0x27770a9694e4B4b1E130Ab91Bc327C36855f612E'
+      - BLOCK_SIGNER_PRIVATE_KEY: 'da5deb73dbc9dea2e3916929daaf079f75232d32a2cf37ff8b1f7140ef3fd9db'
+      - BLOCK_SIGNER_PRIVATE_KEY_PASSWORD: 'pwd'
+      - ETH1_CTC_DEPLOYMENT_HEIGHT: '7017096'
+      - ETH1_SYNC_SERVICE_ENABLE: 'true'
+      - L2GETH_GENESIS_URL: 'https://storage.googleapis.com/optimism/goerli/goerli-devnet-genesis-2022-06.json'
+      - L2GETH_GENESIS_HASH: '0x1067d2037744f17d34e3ceb88b0d654a3798f5d12b79b348085f13f1ec458636'
+      - ROLLUP_CLIENT_HTTP: 'http://dtl:7878'
+      - ROLLUP_MAX_CALLDATA_SIZE: '40000'
+      - ROLLUP_POLL_INTERVAL_FLAG: '1s'
+      - ROLLUP_VERIFIER_ENABLE: 'true'
+      - DATADIR: '/data/l2geth'
+      - CHAIN_ID: '420'
+      - NETWORK_ID: '420'
+      - NO_DISCOVER: 'true'
+      - NO_USB: 'true'
+      - GASPRICE: '0'
+      - TARGET_GAS_LIMIT: '15000000'
+      - RPC_ADDR: '0.0.0.0'
+      - RPC_API: 'admin,eth,rollup,net,web3,debug'
+      - RPC_CORS_DOMAIN: '*'
+      - RPC_ENABLE: 'true'
+      - RPC_PORT: '8545'
+      - RPC_VHOSTS: '*'
+      - WS_ADDR: '0.0.0.0'
+      - WS_API: 'eth,rollup,net,web3,debug'
+      - WS_ORIGINS: '*'
+      - WS: 'true'
+    ports:
+      - 8547:8545
+      - 8548:8546
+    volumes:
+      - ./volumes/data/l2geth:/data/l2geth
+    <<: *logging
+
+  op-geth:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.op-geth
+    restart: unless-stopped
+    stop_grace_period: 5m
+    entrypoint: /scripts/bedrock-init.sh && /scripts/op-geth-start.sh
+    environments:
+    - NETWORK_NAME: goerli
+    - BEDROCK_SEQUENCER_HTTP: https://goerli-sequencer.optimism.io
+    - BEDROCK_DATADIR: /data/geth
+    ports:
+      - 8545:8545
+      - 8546:8546
+    volumes:
+      - ./volumes/data/shared:/data/shared
+      - ./volumes/data/geth:/data/geth
+      - ./volumes/data/shared:/data/shared
+      - ./volumes/data/geth:/data/geth
+      - ./volumes/data/l2geth:/data/l2geth
+      - ./volumes/data/torrent_downloads:/data/torrent_downloads
+    <<: *logging
+
+  op-node:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfiles/Dockerfile.op-node
+    restart: unless-stopped
+    stop_grace_period: 5m
+    environments:
+      - NETWORK_NAME: goerli
+      - OP_NODE__RPC_TYPE: basic
+    entrypoint: /scripts/op-node-start.sh
+    volumes:
+      - ./volumes/data/shared:/data/shared
+    <<: *logging
+
+  torrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+      - 6881:6881 
+      - 6881:6881/udp
+    volumes:
+      - ./volumes/data/torrent_config:/data/torrent_config
+      - ./volumes/data/torrent_downloads:/data/torrent_downloads

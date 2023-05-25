@@ -5,10 +5,10 @@ set -exu
 source ./scripts/utils.sh
 
 # Common variables.
-INITIALIZED_FLAG=/shared/initialized.txt
-BEDROCK_JWT_PATH=/shared/jwt.txt
-GETH_DATA_DIR=/geth
-TORRENTS_DIR=/torrents/$NETWORK_NAME
+INITIALIZED_FLAG=/data/shared/initialized.txt
+BEDROCK_JWT_PATH=/data/shared/jwt.txt
+GETH_DATA_DIR=/data/geth
+TORRENTS_DIR=/data/torrents/$NETWORK_NAME
 
 # Wait for the Bedrock flag for this network to be set.
 while true
@@ -35,8 +35,8 @@ fi
 
 # Initialize the Bedrock database.
 if [ "$BEDROCK_SOURCE" == "download" ]; then
-  BEDROCK_TAR_PATH=/downloads/bedrock.tar
-  BEDROCK_TMP_PATH=/bedrock-tmp
+  BEDROCK_TAR_PATH=/data/torrent_downloads/bedrock.tar
+  BEDROCK_TMP_PATH=/data/bedrock-tmp
 
   echo "Downloading bedrock.tar..."
   torrent $BEDROCK_TAR_MAGNET
@@ -50,9 +50,10 @@ if [ "$BEDROCK_SOURCE" == "download" ]; then
   echo "Cleaning up..."
   rm -rf $BEDROCK_TMP_PATH
 elif [ "$BEDROCK_SOURCE" == "migration" ]; then
-  LEGACY_GETH_DATA_DIR=/legacy-geth/geth
-  LEGACY_GETH_COPY_DIR=/legacy-geth-copy
-  WITNESS_TAR_PATH=/downloads/witness.tar
+# will never run this branch in simpler mode
+  LEGACY_GETH_DATA_DIR=/data/l2geth/geth
+  LEGACY_GETH_COPY_DIR=/data/l2geth-copy
+  WITNESS_TAR_PATH=/data/torrent_downloads/witness.tar
   WITNESS_OUT_PATH=/data/witness
 
   echo "Waiting for l2geth..."
