@@ -115,6 +115,7 @@ services:
       - ./volumes/data/shared:/data/shared
       - ./volumes/data/geth:/data/geth
       - ./volumes/data/l2geth:/data/l2geth
+      - ./volume/data/bedrock-tmp:/data/bedrock-tmp
       - ./volumes/data/torrent_downloads:/downloads
     <<: *logging
 
